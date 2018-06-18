@@ -442,12 +442,95 @@ v2.lookup = { handler: (runtime) => {
   }
 }
 
+/*
+   GET /v1/wallet/stats
+ */
+
+v1.getStats =
+{ handler: (runtime) => {
+  return async (request, reply) => {
+    const debug = braveHapi.debug(module, request)
+    const wallets = runtime.database.get('wallets', debug)
+
+    let values = await wallets.aggregate([{
+      $match: {
+        paymentId: {
+          $ne: ''
+        }
+      }
+    }, {
+      $project: {
+        _id: 0,
+        funded: {
+          $cond: {
+            if: {
+              $ne: ['$balances.confirmed', '0']
+            },
+            then: 1,
+            else: 0
+          }
+        },
+        balance: '$balances.balance',
+        created: { $dateToString: { format: '%Y-%m-%d', date: '$timestamp' } }
+      }
+    }, {
+      $group: {
+        _id: '$created',
+        // unable to sum / convert strings
+        balance: {
+          $push: '$balance'
+        },
+        funded: {
+          $sum: '$funded'
+        },
+        wallets: {
+          $sum: 1
+        }
+      }
+    }])
+    values = values.map(({ _id, funded, balance, wallets }) => ({
+      created: _id,
+      balance: add(balance),
+      funded,
+      wallets
+    }))
+
+    reply(values)
+
+    function add (numbers) {
+      return numbers.reduce((memo, number) => (+number || 0) + memo, 0)
+    }
+  }
+},
+
+  auth: {
+    strategy: 'session',
+    scope: [ 'ledger', 'QA' ],
+    mode: 'required'
+  },
+
+  description: 'Retrieves information about wallets',
+  tags: [ 'api' ],
+
+  response: {
+    schema: Joi.array().items(
+      Joi.object().keys({
+        created: Joi.string(),
+        balance: Joi.number(),
+        wallets: Joi.number(),
+        funded: Joi.number()
+      })
+    )
+  }
+}
+
 module.exports.routes = [
   braveHapi.routes.async().path('/v1/wallet/{paymentId}').config(v1.read),
   braveHapi.routes.async().path('/v2/wallet/{paymentId}').config(v2.read),
   braveHapi.routes.async().put().path('/v1/wallet/{paymentId}').config(v1.write),
   braveHapi.routes.async().put().path('/v2/wallet/{paymentId}').config(v2.write),
-  braveHapi.routes.async().path('/v2/wallet').config(v2.lookup)
+  braveHapi.routes.async().path('/v2/wallet').config(v2.lookup),
+  braveHapi.routes.async().path('/v1/wallet/stats').whitelist().config(v1.getStats)
 ]
 
 module.exports.initialize = async (debug, runtime) => {

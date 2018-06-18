@@ -12,7 +12,8 @@ import dotenv from 'dotenv'
 
 import {
   timeout,
-  uint8tohex
+  uint8tohex,
+  justDate
 } from 'bat-utils/lib/extras-utils'
 
 import {
@@ -492,6 +493,17 @@ test('eyeshade: create brave youtube channel and owner', async t => {
     .expect(ok)
 })
 
+test('check stats endpoint', async t => {
+  t.plan(1)
+  const { body } = await ledgerAgent.get('/v1/wallet/stats').expect(ok)
+  t.deepEqual(body, [{
+    created: justDate(new Date()),
+    balance: (new BigNumber(12)).times(1e18).toNumber(),
+    funded: 1,
+    wallets: 2
+  }])
+})
+
 test('payments are cached and can be removed', async t => {
   t.plan(6)
   let cached
@@ -597,6 +609,17 @@ test('ensure referral balances are computed correctly', async t => {
   t.true(walletProbi > 0)
   t.is(walletProbi.toString(), reportProbi)
   assertWithinBounds(t, amount, 5.00, 0.25, 'USD value for a referral should be approx $5')
+})
+
+test('check stats endpoint after funds move', async t => {
+  t.plan(1)
+  const { body } = await ledgerAgent.get('/v1/wallet/stats').expect(ok)
+  t.deepEqual(body, [{
+    created: justDate(new Date()),
+    balance: 0,
+    funded: 0,
+    wallets: 2
+  }])
 })
 
 async function getCached (id, group) {
