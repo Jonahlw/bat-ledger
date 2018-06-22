@@ -14,6 +14,7 @@ import {
   timeout,
   uint8tohex
 } from 'bat-utils/lib/extras-utils'
+import Cache from 'bat-utils/lib/runtime-cache'
 
 import {
   cleanDbs,
@@ -27,7 +28,6 @@ import {
   braveYoutubePublisher,
   createSurveyor,
   balanceAgent,
-  createRedisCache,
   freezeSurveyors
 } from './utils'
 
@@ -43,7 +43,7 @@ const balanceCacheConfig = configuration.cache
 let prevSurveyorId
 let paymentId
 
-const cache = createRedisCache()
+const cache = Cache.create()
 
 const cardDeleteUrl = `/v2/card`
 
