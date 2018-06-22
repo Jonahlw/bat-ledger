@@ -83,6 +83,12 @@ test('ledger: create promotion', async t => {
   await ledgerAgent.post(url).send(valid).expect(ok)
 })
 
+test('check stats endpoint before wallets add', async t => {
+  t.plan(1)
+  const { body } = await ledgerAgent.get('/v1/wallet/stats').expect(ok)
+  t.deepEqual(body, [])
+})
+
 test('ledger : v2 contribution workflow with uphold BAT wallet', async t => {
   const personaId = uuid.v4().toLowerCase()
   const viewingId = uuid.v4().toLowerCase()
