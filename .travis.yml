@@ -12,7 +12,6 @@ env:
     - "BAT_HELPER_SERVER=http://localhost:3004"
     - "BAT_LEDGER_SERVER=http://localhost:3001"
     - "BAT_MONGODB_URI=mongodb://localhost:3010"
-    - "MONGODB_URI=mongodb://mongo/ledger"
     - "BAT_REDIS_URL=redis://localhost:3011"
     - "BAT_SETTLEMENT_ADDRESS=6654ecb0-6079-4f6c-ba58-791cc890a561"
     - "DEBUG=*,-babel,-eslint:*,-mongo:*,mongo:queries"
